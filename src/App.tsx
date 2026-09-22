@@ -108,6 +108,7 @@ function App(){
  useEffect(()=>{const c=makeCanvas(w,h);setLayers([{id:1,name:"Artwork",visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0}]);setSelected(1);setNextId(1);setHistory([]);setFuture([]);setSaved(true)},[kind]);
  const active=layers.find(l=>l.id===selected);
  const composite=useMemo(()=>compose(layers,w,h),[layers,w,h]);
+ useEffect(()=>{const c=editor.current;if(!c)return;const ctx=c.getContext("2d")!,draw=()=>{const r=c.getBoundingClientRect(),scale=Math.min((r.width-28)/w,(r.height-28)/h)*zoom,ox=(r.width-w*scale)/2,oy=(r.height-h*scale)/2;c.width=Math.max(1,Math.floor(r.width*devicePixelRatio));c.height=Math.max(1,Math.floor(r.height*devicePixelRatio));ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,r.width,r.height);checker(ctx,r.width,r.height);ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.imageSmoothingEnabled=false;ctx.drawImage(composite,0,0);drawGuides(ctx,kind,showGuides);ctx.restore()};draw();window.addEventListener("resize",draw);return()=>window.removeEventListener("resize",draw)},[composite,kind,showGuides,zoom,w,h]);
  const snapshot=()=>{setHistory(hh=>hh.length>24?[...hh.slice(-24),layers]:[...hh,layers]);setFuture([]);setSaved(false)};
  const updateLayer=(id:number,fn:(l:Layer)=>void)=>{setLayers(ls=>ls.map(l=>{if(l.id!==id)return l;fn(l);return l}));setSaved(false)};
  const save=()=>{localStorage.setItem("rbxwear-project",JSON.stringify({kind}));setSaved(true)};
