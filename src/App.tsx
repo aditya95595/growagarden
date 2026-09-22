@@ -27,50 +27,41 @@ function faceTexture(source:HTMLCanvasElement,rect:FaceRect){
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.needsUpdate=true;t.minFilter=THREE.LinearFilter;t.magFilter=THREE.NearestFilter;
   return t;
 }
-function faceMaterial(source:HTMLCanvasElement,rect:FaceRect){
-  const map=faceTexture(source,rect);
-  return <meshStandardMaterial map={map} transparent alphaTest={0.02} side={THREE.FrontSide} color="white" roughness={.86}/>;
-}
-function skinMaterial(){return <meshStandardMaterial color="#d8ad82" roughness={.9}/>}
-
-function R6ClothingPart({kind,source,part}:{kind:Kind,source:HTMLCanvasElement,part:"torso"|"rightArm"|"leftArm"|"rightLeg"|"leftLeg"}){
-  const torso=TORSO_FACES;
-  let faces:any;
-  if(part==="torso") faces=torso;
-  else if(part==="rightArm"||part==="rightLeg") faces=LIMB_RIGHT;
-  else faces=LIMB_LEFT;
-  const clothing=kind!=="tshirt" && (kind==="shirt" ? (part==="torso"||part==="rightArm"||part==="leftArm") : (part==="torso"||part==="rightArm"||part==="leftArm"||part==="rightLeg"||part==="leftLeg"));
-  const tshirt=kind==="tshirt" && part==="torso";
-  if(!clothing&&!tshirt) return null;
-  if(tshirt){
-    const t=faceTexture(source,{x:0,y:0,w:source.width,h:source.height});
-    return <mesh position={[0,3,0]} scale={[1.01,1.01,1.01]} renderOrder={2}><boxGeometry args={[2.03,2.03,1.03]}/><meshStandardMaterial map={t} transparent alphaTest={0.02} color="white" roughness={.86}/></mesh>;
-  }
-  return null;
-}
-
-function R6Avatar({kind,source}:{kind:Kind,source:HTMLCanvasElement}){
-  const makeMats=(rects:FaceRect[])=>rects.map(rect=>new THREE.MeshStandardMaterial({
+function faceMaterialObject(source:HTMLCanvasElement,rect:FaceRect){
+  return new THREE.MeshStandardMaterial({
     map:faceTexture(source,rect),transparent:true,alphaTest:.02,color:"white",roughness:.86
-  }));
-  const torso=makeMats([TORSO_FACES.right,TORSO_FACES.left,TORSO_FACES.top,TORSO_FACES.bottom,TORSO_FACES.front,TORSO_FACES.back]);
-  const ra=makeMats([LIMB_RIGHT.right,LIMB_RIGHT.left,LIMB_RIGHT.top,LIMB_RIGHT.bottom,LIMB_RIGHT.front,LIMB_RIGHT.back]);
-  const la=makeMats([LIMB_LEFT.right,LIMB_LEFT.left,LIMB_LEFT.top,LIMB_LEFT.bottom,LIMB_LEFT.front,LIMB_LEFT.back]);
-  const rl=makeMats([LIMB_RIGHT.right,LIMB_RIGHT.left,LIMB_RIGHT.top,LIMB_RIGHT.bottom,LIMB_RIGHT.front,LIMB_RIGHT.back]);
-  const ll=makeMats([LIMB_LEFT.right,LIMB_LEFT.left,LIMB_LEFT.top,LIMB_LEFT.bottom,LIMB_LEFT.front,LIMB_LEFT.back]);
-  useEffect(()=>()=>{[...torso,...ra,...la,...rl,...ll].forEach(m=>{m.map?.dispose();m.dispose()})},[source,kind]);
-  const skinColor="#d8ad82";
-  const skinMat=<meshStandardMaterial color={skinColor} roughness={.9}/>;
+  });
+}
+function skinMaterialObject(){return new THREE.MeshStandardMaterial({color:"#d8ad82",roughness:.9});}
+function R6Avatar({kind,source}:{kind:Kind,source:HTMLCanvasElement}){
+  const mats=useMemo(()=>{
+    if(kind==="tshirt"){
+      const m=skinMaterialObject();
+      const front=faceMaterialObject(source,{x:0,y:0,w:source.width,h:source.height});
+      return {
+        torso:[m,m,m,m,front,m],
+        ra:null,la:null,rl:null,ll:null,
+        all:[m,front]
+      };
+    }
+    const torso=[faceMaterialObject(source,TORSO_FACES.right),faceMaterialObject(source,TORSO_FACES.left),faceMaterialObject(source,TORSO_FACES.top),faceMaterialObject(source,TORSO_FACES.bottom),faceMaterialObject(source,TORSO_FACES.front),faceMaterialObject(source,TORSO_FACES.back)];
+    const ra=[faceMaterialObject(source,LIMB_RIGHT.right),faceMaterialObject(source,LIMB_RIGHT.left),faceMaterialObject(source,LIMB_RIGHT.top),faceMaterialObject(source,LIMB_RIGHT.bottom),faceMaterialObject(source,LIMB_RIGHT.front),faceMaterialObject(source,LIMB_RIGHT.back)];
+    const la=[faceMaterialObject(source,LIMB_LEFT.right),faceMaterialObject(source,LIMB_LEFT.left),faceMaterialObject(source,LIMB_LEFT.top),faceMaterialObject(source,LIMB_LEFT.bottom),faceMaterialObject(source,LIMB_LEFT.front),faceMaterialObject(source,LIMB_LEFT.back)];
+    const rl=[faceMaterialObject(source,LIMB_RIGHT.right),faceMaterialObject(source,LIMB_RIGHT.left),faceMaterialObject(source,LIMB_RIGHT.top),faceMaterialObject(source,LIMB_RIGHT.bottom),faceMaterialObject(source,LIMB_RIGHT.front),faceMaterialObject(source,LIMB_RIGHT.back)];
+    const ll=[faceMaterialObject(source,LIMB_LEFT.right),faceMaterialObject(source,LIMB_LEFT.left),faceMaterialObject(source,LIMB_LEFT.top),faceMaterialObject(source,LIMB_LEFT.bottom),faceMaterialObject(source,LIMB_LEFT.front),faceMaterialObject(source,LIMB_LEFT.back)];
+    return {torso,ra,la,rl,ll,all:[...torso,...ra,...la,...rl,...ll]};
+  },[source,kind]);
+  useEffect(()=>()=>mats.all.forEach(m=>{m.map?.dispose();m.dispose()}),[mats]);
+  const skin=useMemo(()=>skinMaterialObject(),[]);
+  useEffect(()=>()=>skin.dispose(),[skin]);
   const shirt=kind==="shirt",pants=kind==="pants",tshirt=kind==="tshirt";
-  const tshirtMap=new THREE.CanvasTexture(source);tshirtMap.colorSpace=THREE.SRGBColorSpace;tshirtMap.needsUpdate=true;
-  useEffect(()=>()=>tshirtMap.dispose(),[source,kind]);
   return <group position={[0,-2.5,0]}>
-    <mesh position={[0,4.5,0]} castShadow><boxGeometry args={[2,1,1]}/>{skinMat}</mesh>
-    <mesh position={[0,3,0]} castShadow><boxGeometry args={[2.02,2.02,1.02]}/>{shirt||pants?torso.map((m,i)=><primitive key={i} object={m}/>):tshirt?[skinMat,skinMat,skinMat,skinMat,<meshStandardMaterial map={tshirtMap} transparent alphaTest={.02} roughness={.86}/>,skinMat]:skinMat}</mesh>
-    <mesh position={[1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?ra.map((m,i)=><primitive key={i} object={m}/>):skinMat}</mesh>
-    <mesh position={[-1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?la.map((m,i)=><primitive key={i} object={m}/>):skinMat}</mesh>
-    <mesh position={[.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?rl.map((m,i)=><primitive key={i} object={m}/>):skinMat}</mesh>
-    <mesh position={[-.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?ll.map((m,i)=><primitive key={i} object={m}/>):skinMat}</mesh>
+    <mesh position={[0,4.5,0]} castShadow><boxGeometry args={[2,1,1]}/>{skin}</mesh>
+    <mesh position={[0,3,0]} castShadow><boxGeometry args={[2.02,2.02,1.02]}/>{tshirt||shirt||pants?mats.torso.map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
+    <mesh position={[1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?(mats.ra as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
+    <mesh position={[-1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?(mats.la as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
+    <mesh position={[.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?(mats.rl as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
+    <mesh position={[-.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?(mats.ll as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
   </group>;
 }
 class PreviewErrorBoundary extends React.Component<{children:React.ReactNode},{hasError:boolean}>{
