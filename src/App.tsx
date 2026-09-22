@@ -6,7 +6,7 @@ import{House,Cloud,PanelLeft,Undo2,Redo2,Upload,Download,Paintbrush,Eraser,Paint
 
 type Kind="shirt"|"pants"|"tshirt";
 type Tool="select"|"brush"|"eraser"|"fill"|"picker"|"rect"|"circle"|"text";
-type Layer={id:number,name:string,visible:boolean,opacity:number,canvas:HTMLCanvasElement,x:number,y:number,scale:number,rotation:number};
+type Layer={id:number,name:string,visible:boolean,opacity:number,canvas:HTMLCanvasElement,x:number,y:number,scale:number,rotation:number,flipX:boolean};
 type FaceRect={x:number,y:number,w:number,h:number};
 
 const SIZES:Record<Kind,[number,number]>={shirt:[585,559],pants:[585,559],tshirt:[512,512]};
@@ -64,8 +64,9 @@ function removeLightBackground(c:HTMLCanvasElement){
  ctx.putImageData(img,0,0)
 }
 function drawLayerTo(ctx:CanvasRenderingContext2D,l:Layer,cx:number,cy:number){
- if(!l.visible||l.opacity<=0)return;ctx.save();ctx.globalAlpha=l.opacity;ctx.translate(cx+l.x,cy+l.y);ctx.rotate(l.rotation*Math.PI/180);ctx.scale(l.scale,l.scale);ctx.drawImage(l.canvas,-l.canvas.width/2,-l.canvas.height/2);ctx.restore()
+ if(!l.visible||l.opacity<=0)return;ctx.save();ctx.globalAlpha=l.opacity;ctx.translate(cx+l.x,cy+l.y);ctx.rotate(l.rotation*Math.PI/180);ctx.scale(l.scale*(l.flipX?-1:1),l.scale);ctx.drawImage(l.canvas,-l.canvas.width/2,-l.canvas.height/2);ctx.restore()
 }
+function cloneLayers(layers:Layer[]){return layers.map(l=>({...l,canvas:cloneCanvas(l.canvas)}))}
 function compose(layers:Layer[],w:number,h:number){
  const c=makeCanvas(w,h),ctx=c.getContext("2d")!;layers.forEach(l=>drawLayerTo(ctx,l,w/2,h/2));return c;
 }
@@ -105,19 +106,19 @@ function App(){
  [viewMode,setViewMode]=useState<"3d"|"split"|"2d">("split"),[ground,setGround]=useState(true),[lighting,setLighting]=useState(1.3),
  [textValue,setTextValue]=useState("YOUR TEXT"),[font,setFont]=useState("Inter"),[fontSize,setFontSize]=useState(48),[bold,setBold]=useState(true);
  const[w,h]=SIZES[kind],editor=useRef<HTMLCanvasElement>(null),file=useRef<HTMLInputElement>(null),drag=useRef(false),last=useRef<{x:number,y:number}|null>(null);
- useEffect(()=>{const c=makeCanvas(w,h);setLayers([{id:1,name:"Artwork",visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0}]);setSelected(1);setNextId(1);setHistory([]);setFuture([]);setSaved(true)},[kind]);
+ useEffect(()=>{const c=makeCanvas(w,h);setLayers([{id:1,name:"Artwork",visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0,flipX:false}]);setSelected(1);setNextId(1);setHistory([]);setFuture([]);setSaved(true)},[kind]);
  const active=layers.find(l=>l.id===selected);
  const composite=useMemo(()=>compose(layers,w,h),[layers,w,h]);
  useEffect(()=>{const c=editor.current;if(!c)return;const ctx=c.getContext("2d")!,draw=()=>{const r=c.getBoundingClientRect(),scale=Math.min((r.width-28)/w,(r.height-28)/h)*zoom,ox=(r.width-w*scale)/2,oy=(r.height-h*scale)/2;c.width=Math.max(1,Math.floor(r.width*devicePixelRatio));c.height=Math.max(1,Math.floor(r.height*devicePixelRatio));ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);ctx.clearRect(0,0,r.width,r.height);checker(ctx,r.width,r.height);ctx.save();ctx.translate(ox,oy);ctx.scale(scale,scale);ctx.imageSmoothingEnabled=false;ctx.drawImage(composite,0,0);drawGuides(ctx,kind,showGuides);ctx.restore()};draw();window.addEventListener("resize",draw);return()=>window.removeEventListener("resize",draw)},[composite,kind,showGuides,zoom,w,h]);
- const snapshot=()=>{setHistory(hh=>hh.length>24?[...hh.slice(-24),layers]:[...hh,layers]);setFuture([]);setSaved(false)};
+ const snapshot=()=>{setHistory(hh=>hh.length>24?[...hh.slice(-24),cloneLayers(layers)]:[...hh,cloneLayers(layers)]);setFuture([]);setSaved(false)};
  const updateLayer=(id:number,fn:(l:Layer)=>void)=>{setLayers(ls=>ls.map(l=>{if(l.id!==id)return l;fn(l);return l}));setSaved(false)};
  const save=()=>{localStorage.setItem("rbxwear-project",JSON.stringify({kind}));setSaved(true)};
  const exportPng=()=>{const a=document.createElement("a");a.href=composite.toDataURL("image/png");a.download="rbxwear-"+kind+"-"+w+"x"+h+".png";a.click()};
- const addLayer=(name="Layer")=>{snapshot();const id=nextId+1;setNextId(id);setLayers(ls=>[...ls,{id,name:name+" "+id,visible:true,opacity:1,canvas:makeCanvas(w,h),x:0,y:0,scale:1,rotation:0}]);setSelected(id)};
- const duplicate=()=>{if(!active)return;snapshot();const id=nextId+1;setNextId(id);setLayers(ls=>[...ls,{...active,id,name:active.name+" copy",canvas:cloneCanvas(active.canvas),x:active.x+12,y:active.y+12}]);setSelected(id)};
+ const addLayer=(name="Layer")=>{snapshot();const id=nextId+1;setNextId(id);setLayers(ls=>[...ls,{id,name:name+" "+id,visible:true,opacity:1,canvas:makeCanvas(w,h),x:0,y:0,scale:1,rotation:0,flipX:false}]);setSelected(id)};
+ const duplicate=()=>{if(!active)return;snapshot();const id=nextId+1;setNextId(id);setLayers(ls=>[...ls,{...active,id,name:active.name+" copy",canvas:cloneCanvas(active.canvas),x:active.x+12,y:active.y+12,flipX:active.flipX}]);setSelected(id)};
  const remove=()=>{if(layers.length<=1)return;snapshot();const ls=layers.filter(l=>l.id!==selected);setLayers(ls);setSelected(ls[0].id)};
  const undo=()=>{if(!history.length)return;setFuture(f=>[layers,...f]);setLayers(history[history.length-1]);setHistory(history.slice(0,-1));setSaved(false)};
- const redo=()=>{if(!future.length)return;setHistory(h=>[...h,layers]);setLayers(future[0]);setFuture(future.slice(1));setSaved(false)};
+ const redo=()=>{if(!future.length)return;setHistory(h=>[...h,cloneLayers(layers)]);setLayers(cloneLayers(future[0]));setFuture(future.slice(1));setSaved(false)};
  const reset=()=>{const c=makeCanvas(w,h);setLayers([{id:1,name:"Artwork",visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0}]);setSelected(1);setSaved(false)};
  const editorPoint=(e:React.PointerEvent)=>{const v=editor.current!,r=v.getBoundingClientRect(),s=Math.min((r.width-28)/w,(r.height-28)/h)*zoom;return{x:(e.clientX-r.left-(r.width-w*s)/2)/s,y:(e.clientY-r.top-(r.height-h*s)/2)/s}};
  const paint=(e:React.PointerEvent)=>{if(!active||!drag.current)return;const p=editorPoint(e);if(p.x<0||p.y<0||p.x>=w||p.y>=h)return;const ctx=active.canvas.getContext("2d")!;
@@ -135,7 +136,7 @@ function App(){
  const importImage=(f:File)=>{const im=new Image();im.onload=()=>{snapshot();const c=makeCanvas(w,h),ctx=c.getContext("2d")!,scale=Math.min(w/im.width,h/im.height)*.82;ctx.drawImage(im,(w-im.width*scale)/2,(h-im.height*scale)/2,im.width*scale,im.height*scale);const id=nextId+1;setNextId(id);setLayers(ls=>[...ls,{id,name:f.name.replace(/\.[^.]+$/,""),visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0}]);setSelected(id);setSaved(false)};im.src=URL.createObjectURL(f)};
  const textLayer=()=>{snapshot();const id=nextId+1;setNextId(id);const c=addTextCanvas(textValue,font,fontSize,color,bold);setLayers(ls=>[...ls,{id,name:"Text "+id,visible:true,opacity:1,canvas:c,x:0,y:0,scale:1,rotation:0}]);setSelected(id);setTool("select")};
  const removeBg=()=>{if(!active)return;snapshot();removeLightBackground(active.canvas);setLayers([...layers]);setSaved(false)};
- const flip=()=>{if(!active)return;snapshot();updateLayer(active.id,l=>l.scale=-l.scale)};
+ const flip=()=>{if(!active)return;snapshot();updateLayer(active.id,l=>l.flipX=!l.flipX)};
  const downloadTemplate=()=>{const c=makeCanvas(w,h),ctx=c.getContext("2d")!;checker(ctx,w,h);drawGuides(ctx,kind,true);const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="rbxwear-template-"+w+"x"+h+".png";a.click()};
  const setBodyView=(m:"3d"|"split"|"2d")=>setViewMode(m);
  return <div className="app">
@@ -195,7 +196,7 @@ function App(){
        <label>Scale<input type="number" min=".1" max="5" step=".05" value={active?.scale??1} onChange={e=>active&&updateLayer(active.id,l=>l.scale=+e.target.value)}/></label>
        <label>Rotate<input type="number" value={Math.round(active?.rotation??0)} onChange={e=>active&&updateLayer(active.id,l=>l.rotation=+e.target.value)}/></label>
       </div></div>
-      <div className="actionrow"><button onClick={flip}><FlipHorizontal2 size={15}/>Flip</button><button onClick={()=>active&&updateLayer(active.id,l=>{l.x=0;l.y=0;l.scale=1;l.rotation=0})}><Maximize2 size={15}/>Center</button></div>
+      <div className="actionrow"><button onClick={flip}><FlipHorizontal2 size={15}/>Flip</button><button onClick={()=>active&&updateLayer(active.id,l=>{l.x=0;l.y=0;l.scale=1;l.rotation=0;l.flipX=false})}><Maximize2 size={15}/>Center</button></div>
       <div className="controlgroup"><div className="controlhead"><span>Layer</span><Layers3 size={13}/></div><div className="layerops"><button onClick={()=>addLayer("Layer")}><Plus size={14}/>New layer</button><button onClick={remove}><Trash size={14}/>Delete</button></div></div>
     </div>:<div className="inspectorbody">
       <div className="controlgroup"><div className="controlhead"><span>Avatar preview</span><b>R6</b></div><div className="previewpill"><span>Blocky</span><span>Classic six-part rig</span></div></div>
