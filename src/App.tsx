@@ -78,20 +78,21 @@ function Skin(){return <meshStandardMaterial color="#d9b08a" roughness={.9}/>}
 
 function R6Avatar({kind,source,body}:{kind:Kind,source:HTMLCanvasElement,body:"blocky"|"boy"|"girl"}){
  const shirt=kind==="shirt",pants=kind==="pants",tee=kind==="tshirt";
+ const preset=body==="girl"?{torso:[2.02,2,1],arm:[.9,2,1],leg:[.95,2.05,1],head:[1.95,1,1]}:body==="boy"?{torso:[2.12,2.08,1],arm:[1,2.1,1],leg:[1.02,2.1,1],head:[2.02,1.02,1]}:{torso:[2.02,2.02,1.02],arm:[1.02,2.02,1.02],leg:[1.02,2.02,1.02],head:[2,1,1]};
  return <group position={[0,-2.7,0]} scale={1.48}>
-   <mesh position={[0,5.25,0]} castShadow><boxGeometry args={[2,1,1]}/><Skin/></mesh>
-   <mesh position={[0,3.25,0]} castShadow><boxGeometry args={[2.02,2.02,1.02]}/>{tee?
+   <mesh position={[0,5.25,0]} castShadow><boxGeometry args={preset.head}/><Skin/></mesh>
+   <mesh position={[0,3.25,0]} castShadow><boxGeometry args={preset.torso}/>{tee?
      [<Skin key="0"/>,<Skin key="1"/>,<Skin key="2"/>,<Skin key="3"/>,<FaceMaterial key="4" source={source} rect={{x:0,y:0,w:source.width,h:source.height}}/>,<Skin key="5"/>]:
-     [<FaceMaterial key="0" source={source} rect={TORSO.right}/>,<FaceMaterial key="1" source={source} rect={TORSO.left} flip/>,<FaceMaterial key="2" source={source} rect={TORSO.top}/>,<FaceMaterial key="3" source={source} rect={TORSO.bottom}/>,<FaceMaterial key="4" source={source} rect={TORSO.front}/>,<FaceMaterial key="5" source={source} rect={TORSO.back} flip/>]
+     [<FaceMaterial key="0" source={source} rect={TORSO.right}/>,<FaceMaterial key="1" source={source} rect={TORSO.left}/>,<FaceMaterial key="2" source={source} rect={TORSO.top}/>,<FaceMaterial key="3" source={source} rect={TORSO.bottom}/>,<FaceMaterial key="4" source={source} rect={TORSO.front}/>,<FaceMaterial key="5" source={source} rect={TORSO.back}/>]
    }</mesh>
-   <mesh position={[-1.51,3.25,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?
-    [<FaceMaterial key="0" source={source} rect={LIMB_L.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_L.left} flip/>,<FaceMaterial key="2" source={source} rect={LIMB_L.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_L.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_L.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_L.back} flip/>]:<Skin/>}</mesh>
-   <mesh position={[1.51,3.25,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?
-    [<FaceMaterial key="0" source={source} rect={LIMB_R.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_R.left} flip/>,<FaceMaterial key="2" source={source} rect={LIMB_R.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_R.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_R.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_R.back} flip/>]:<Skin/>}</mesh>
-   <mesh position={[-.51,1.05,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?
-    [<FaceMaterial key="0" source={source} rect={LIMB_L.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_L.left} flip/>,<FaceMaterial key="2" source={source} rect={LIMB_L.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_L.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_L.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_L.back} flip/>]:<Skin/>}</mesh>
-   <mesh position={[.51,1.05,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?
-    [<FaceMaterial key="0" source={source} rect={LIMB_R.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_R.left} flip/>,<FaceMaterial key="2" source={source} rect={LIMB_R.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_R.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_R.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_R.back} flip/>]:<Skin/>}</mesh>
+   <mesh position={[-1.5,3.25,0]} castShadow><boxGeometry args={preset.arm}/>{shirt?
+    [<FaceMaterial key="0" source={source} rect={LIMB_L.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_L.left}/>,<FaceMaterial key="2" source={source} rect={LIMB_L.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_L.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_L.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_L.back}/>]:<Skin/>}</mesh>
+   <mesh position={[1.5,3.25,0]} castShadow><boxGeometry args={preset.arm}/>{shirt?
+    [<FaceMaterial key="0" source={source} rect={LIMB_R.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_R.left}/>,<FaceMaterial key="2" source={source} rect={LIMB_R.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_R.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_R.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_R.back}/>]:<Skin/>}</mesh>
+   <mesh position={[-.51,1.05,0]} castShadow><boxGeometry args={preset.leg}/>{pants?
+    [<FaceMaterial key="0" source={source} rect={LIMB_L.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_L.left}/>,<FaceMaterial key="2" source={source} rect={LIMB_L.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_L.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_L.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_L.back}/>]:<Skin/>}</mesh>
+   <mesh position={[.51,1.05,0]} castShadow><boxGeometry args={preset.leg}/>{pants?
+    [<FaceMaterial key="0" source={source} rect={LIMB_R.right}/>,<FaceMaterial key="1" source={source} rect={LIMB_R.left}/>,<FaceMaterial key="2" source={source} rect={LIMB_R.top}/>,<FaceMaterial key="3" source={source} rect={LIMB_R.bottom}/>,<FaceMaterial key="4" source={source} rect={LIMB_R.front}/>,<FaceMaterial key="5" source={source} rect={LIMB_R.back}/>]:<Skin/>}</mesh>
  </group>;
 }
 
@@ -134,21 +135,23 @@ export default function App(){
  const removeBg=()=>{if(!active)return;snapshot();removeBackground(active.canvas);setLayers([...layers]);setSaved(false)};
  const flip=()=>mutate(l=>l.flipX=!l.flipX);
  const alignCenter=()=>mutate(l=>{l.x=0;l.y=0});
- const saveProject=()=>{const data={version:2,kind,layers:layers.map(l=>({id:l.id,name:l.name,visible:l.visible,locked:l.locked,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation,flipX:l.flipX,blend:l.blend,image:l.canvas.toDataURL("image/png")}))};const a=document.createElement("a");a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(data));a.download="rbxwear-project.json";a.click();setSaved(true)};
- const loadProject=(f:File)=>{const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(String(reader.result)),arr:Layer[]=[];Promise.all((d.layers||[]).map((x:any)=>new Promise<void>(res=>{const im=new Image();im.onload=()=>{const c=makeCanvas(w,h);c.getContext("2d")!.drawImage(im,0,0);arr.push({...x,canvas:c});res()};im.src=x.image}))).then(()=>{if(arr.length){setLayers(arr);setSelected(arr[0].id);setNextId(Math.max(...arr.map(x=>x.id)));setSaved(true)}})}catch{alert("That project file is not valid.")}};reader.readAsText(f)};
+ const projectData=()=>({version:3,kind,layers:layers.map(l=>({id:l.id,name:l.name,visible:l.visible,locked:l.locked,opacity:l.opacity,x:l.x,y:l.y,scale:l.scale,rotation:l.rotation,flipX:l.flipX,blend:l.blend,image:l.canvas.toDataURL("image/png")}))});
+ const saveProject=()=>{const data=projectData();localStorage.setItem("rbxwear-project",JSON.stringify(data));const a=document.createElement("a");a.href="data:application/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(data));a.download="rbxwear-project.json";a.click();setSaved(true)};
+ const restoreAutosave=()=>{const raw=localStorage.getItem("rbxwear-project");if(!raw)return false;try{const d=JSON.parse(raw);if(d.kind&&Array.isArray(d.layers)){setKind(d.kind);return true}}catch{}return false};
+ const loadProject=(f:File)=>{const reader=new FileReader();reader.onload=()=>{try{const d=JSON.parse(String(reader.result));if(d.kind&&d.kind!==kind){setKind(d.kind);localStorage.setItem("rbxwear-pending-project",String(reader.result));setSaved(true);return}const arr:Layer[]=[];Promise.all((d.layers||[]).map((x:any)=>new Promise<void>(res=>{const im=new Image();im.onload=()=>{const c=makeCanvas(w,h);c.getContext("2d")!.drawImage(im,0,0);arr.push({...x,canvas:c});res()};im.src=x.image}))).then(()=>{if(arr.length){setLayers(arr);setSelected(arr[0].id);setNextId(Math.max(...arr.map(x=>x.id)));setSaved(true)}})}catch{alert("That project file is not valid.")}};reader.readAsText(f)};
  const exportPng=()=>{const a=document.createElement("a");a.href=composite.toDataURL("image/png");a.download="rbxwear-"+kind+"-"+w+"x"+h+".png";a.click()};
  const downloadTemplate=()=>{const c=makeCanvas(w,h),x=c.getContext("2d")!;x.clearRect(0,0,w,h);drawGuides(x,kind,true);const a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="rbxwear-template-"+w+"x"+h+".png";a.click()};
 
  return <div className="app">
   <header className="topbar">
    <div className="brand"><span className="brandmark"><Sparkles size={15}/></span><b>RbxWear</b><small>STUDIO</small></div>
-   <div className="crumb"><span>Projects</span><span>/</span><b>Untitled design</b><i className={saved?"saved":""}/></div>
-   <div className="topactions"><button title="Save project" onClick={saveProject}><FileDown size={15}/></button><button title="Undo" onClick={undo} disabled={!history.length}><Undo2 size={16}/></button><button title="Redo" onClick={redo} disabled={!future.length}><Redo2 size={16}/></button><button className="save" onClick={()=>setSaved(true)}><Save size={14}/>Save</button><button className="export" onClick={exportPng}><Download size={14}/>Export</button></div>
+   <div className="crumb"><span>Projects</span><span>/</span><b>Untitled design</b><i title={saved?"Saved locally":"Unsaved changes"} className={saved?"saved":""}/></div>
+   <div className="topactions"><button title="Save project" onClick={saveProject}><FileDown size={15}/></button><button title="Undo" onClick={undo} disabled={!history.length}><Undo2 size={16}/></button><button title="Redo" onClick={redo} disabled={!future.length}><Redo2 size={16}/></button><button className="save" onClick={saveProject}><Save size={14}/>Save</button><button className="export" onClick={exportPng}><Download size={14}/>Export</button></div>
   </header>
 
   <div className="workspace">
    <aside className="leftbar">
-    <div className="lefthead"><button className="homebtn"><House size={17}/></button><span>POL</span><button className="homebtn"><PanelsTopLeft size={17}/></button></div>
+    <div className="lefthead"><button className="homebtn" title="Project home" onClick={()=>setHomeOpen(true)}><House size={17}/></button><span>POL</span><button className="homebtn" title="Toggle 2D editor" onClick={()=>setViewMode(viewMode==="2d"?"split":"2d")}><PanelsTopLeft size={17}/></button></div>
     <div className="rail">
       <button className={panel==="design"?"active":""} onClick={()=>setPanel("design")}><Palette size={18}/><span>Design</span></button>
       <button className={panel==="assets"?"active":""} onClick={()=>setPanel("assets")}><ImageIcon size={18}/><span>Assets</span></button>
@@ -191,7 +194,7 @@ export default function App(){
       <div className="viewmodes"><button className={viewMode==="3d"?"active":""} onClick={()=>setViewMode("3d")}>3D</button><button className={viewMode==="split"?"active":""} onClick={()=>setViewMode("split")}>Split</button><button className={viewMode==="2d"?"active":""} onClick={()=>setViewMode("2d")}>2D</button></div>
       {viewMode!=="3d"&&<div className={"dock "+(viewMode==="2d"?"docked2d":"")}><div className="dockhead"><div><b>2D texture editor</b><span>{w} × {h} px · guides excluded from export</span></div><div><button onClick={()=>setZoom(Math.max(.5,zoom-.1))}><ZoomOut size={14}/></button><span>{Math.round(zoom*100)}%</span><button onClick={()=>setZoom(Math.min(3,zoom+.1))}><ZoomIn size={14}/></button><button onClick={()=>setViewMode("3d")}><Maximize2 size={14}/></button></div></div><div className="dockcanvas"><canvas ref={editor} onPointerDown={down} onPointerMove={paint} onPointerUp={up} onPointerLeave={up}/><div className="canvasbadge">{kind==="tshirt"?"T-SHIRT":"585 × 559"} <span>LIVE</span></div></div></div>}
     </div>
-    <div className="stagefooter"><div className="bodytabs"><span className="label">TEST AVATAR</span><button className="bodyactive"><span className="avataricon">▦</span>Blocky <small>R6</small></button><button disabled>Boy</button><button disabled>Girl</button></div><div className="stagecontrols"><button className={showGrid?"active":""} onClick={()=>setShowGrid(!showGrid)}><Grid3X3 size={14}/></button><button className={showGuides?"active":""} onClick={()=>setShowGuides(!showGuides)}><Eye size={14}/></button></div></div>
+    <div className="stagefooter"><div className="bodytabs"><span className="label">TEST AVATAR</span><button className={body==="blocky"?"bodyactive":""} onClick={()=>setBody("blocky")}><span className="avataricon">▦</span>Blocky <small>R6</small></button><button className={body==="boy"?"bodyactive":""} onClick={()=>setBody("boy")}>Boy <small>R6</small></button><button className={body==="girl"?"bodyactive":""} onClick={()=>setBody("girl")}>Girl <small>R6</small></button></div><div className="stagecontrols"><button className={showGrid?"active":""} onClick={()=>setShowGrid(!showGrid)}><Grid3X3 size={14}/></button><button className={showGuides?"active":""} onClick={()=>setShowGuides(!showGuides)}><Eye size={14}/></button></div></div>
    </main>
 
    <aside className="inspector">
@@ -217,6 +220,6 @@ export default function App(){
     <div className="inspectbottom"><span>{saved?"All changes saved locally":"Unsaved changes"}</span><div><button onClick={()=>projectFile.current?.click()}><FileUp size={13}/>Open</button><input hidden ref={projectFile} type="file" accept=".json,application/json" onChange={e=>e.target.files?.[0]&&loadProject(e.target.files[0])}/><button onClick={saveProject}><FileDown size={13}/>Project</button></div></div>
    </aside>
   </div>
-  <footer>Independent creator tool · Not affiliated with Roblox Corporation · Classic clothing editor</footer>
+  {homeOpen&&<div className="modalbackdrop" onMouseDown={()=>setHomeOpen(false)}><div className="homemodal" onMouseDown={e=>e.stopPropagation()}><div className="modalhead"><div><b>Project Home</b><span>RbxWear Studio</span></div><button title="Close" onClick={()=>setHomeOpen(false)}>×</button></div><div className="homegrid"><button onClick={()=>{reset();setHomeOpen(false)}}><Plus size={18}/><b>New design</b><span>Blank transparent clothing canvas</span></button><button onClick={()=>projectFile.current?.click()}><FileUp size={18}/><b>Open project</b><span>Load an RbxWear JSON project</span></button><button onClick={saveProject}><FileDown size={18}/><b>Save project</b><span>Store locally and download JSON</span></button></div></div></div>}<footer>Independent creator tool · Not affiliated with Roblox Corporation · Classic clothing editor</footer>
  </div>
 }
