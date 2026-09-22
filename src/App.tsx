@@ -33,35 +33,37 @@ function faceMaterialObject(source:HTMLCanvasElement,rect:FaceRect){
   });
 }
 function skinMaterialObject(){return new THREE.MeshStandardMaterial({color:"#d8ad82",roughness:.9});}
+function buildFaceMaterials(source:HTMLCanvasElement,faces:FaceRect[]){
+  return faces.map(face=>faceMaterialObject(source,face));
+}
 function R6Avatar({kind,source}:{kind:Kind,source:HTMLCanvasElement}){
-  const mats=useMemo(()=>{
+  const materials=useMemo(()=>{
+    const skin=skinMaterialObject();
     if(kind==="tshirt"){
-      const m=skinMaterialObject();
       const front=faceMaterialObject(source,{x:0,y:0,w:source.width,h:source.height});
-      return {
-        torso:[m,m,m,m,front,m],
-        ra:null,la:null,rl:null,ll:null,
-        all:[m,front]
-      };
+      return {skin,front,torso:[skin,skin,skin,skin,front,skin],ra:null,la:null,rl:null,ll:null,dispose:[front]};
     }
-    const torso=[faceMaterialObject(source,TORSO_FACES.right),faceMaterialObject(source,TORSO_FACES.left),faceMaterialObject(source,TORSO_FACES.top),faceMaterialObject(source,TORSO_FACES.bottom),faceMaterialObject(source,TORSO_FACES.front),faceMaterialObject(source,TORSO_FACES.back)];
-    const ra=[faceMaterialObject(source,LIMB_RIGHT.right),faceMaterialObject(source,LIMB_RIGHT.left),faceMaterialObject(source,LIMB_RIGHT.top),faceMaterialObject(source,LIMB_RIGHT.bottom),faceMaterialObject(source,LIMB_RIGHT.front),faceMaterialObject(source,LIMB_RIGHT.back)];
-    const la=[faceMaterialObject(source,LIMB_LEFT.right),faceMaterialObject(source,LIMB_LEFT.left),faceMaterialObject(source,LIMB_LEFT.top),faceMaterialObject(source,LIMB_LEFT.bottom),faceMaterialObject(source,LIMB_LEFT.front),faceMaterialObject(source,LIMB_LEFT.back)];
-    const rl=[faceMaterialObject(source,LIMB_RIGHT.right),faceMaterialObject(source,LIMB_RIGHT.left),faceMaterialObject(source,LIMB_RIGHT.top),faceMaterialObject(source,LIMB_RIGHT.bottom),faceMaterialObject(source,LIMB_RIGHT.front),faceMaterialObject(source,LIMB_RIGHT.back)];
-    const ll=[faceMaterialObject(source,LIMB_LEFT.right),faceMaterialObject(source,LIMB_LEFT.left),faceMaterialObject(source,LIMB_LEFT.top),faceMaterialObject(source,LIMB_LEFT.bottom),faceMaterialObject(source,LIMB_LEFT.front),faceMaterialObject(source,LIMB_LEFT.back)];
-    return {torso,ra,la,rl,ll,all:[...torso,...ra,...la,...rl,...ll]};
+    const torso=buildFaceMaterials(source,[TORSO_FACES.right,TORSO_FACES.left,TORSO_FACES.top,TORSO_FACES.bottom,TORSO_FACES.front,TORSO_FACES.back]);
+    const ra=buildFaceMaterials(source,[LIMB_RIGHT.right,LIMB_RIGHT.left,LIMB_RIGHT.top,LIMB_RIGHT.bottom,LIMB_RIGHT.front,LIMB_RIGHT.back]);
+    const la=buildFaceMaterials(source,[LIMB_LEFT.right,LIMB_LEFT.left,LIMB_LEFT.top,LIMB_LEFT.bottom,LIMB_LEFT.front,LIMB_LEFT.back]);
+    const rl=buildFaceMaterials(source,[LIMB_RIGHT.right,LIMB_RIGHT.left,LIMB_RIGHT.top,LIMB_RIGHT.bottom,LIMB_RIGHT.front,LIMB_RIGHT.back]);
+    const ll=buildFaceMaterials(source,[LIMB_LEFT.right,LIMB_LEFT.left,LIMB_LEFT.top,LIMB_LEFT.bottom,LIMB_LEFT.front,LIMB_LEFT.back]);
+    return {skin,front:null,torso,ra,la,rl,ll,dispose:[...torso,...ra,...la,...rl,...ll]};
   },[source,kind]);
-  useEffect(()=>()=>mats.all.forEach(m=>{m.map?.dispose();m.dispose()}),[mats]);
-  const skin=useMemo(()=>skinMaterialObject(),[]);
-  useEffect(()=>()=>skin.dispose(),[skin]);
+  useEffect(()=>()=>{materials.dispose.forEach(m=>{m.map?.dispose();m.dispose()});materials.skin.dispose()},[materials]);
   const shirt=kind==="shirt",pants=kind==="pants",tshirt=kind==="tshirt";
+  const skin=materials.skin;
   return <group position={[0,-2.5,0]}>
-    <mesh position={[0,4.5,0]} castShadow><boxGeometry args={[2,1,1]}/>{skin}</mesh>
-    <mesh position={[0,3,0]} castShadow><boxGeometry args={[2.02,2.02,1.02]}/>{tshirt||shirt||pants?mats.torso.map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
-    <mesh position={[1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?(mats.ra as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
-    <mesh position={[-1.51,3,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{shirt?(mats.la as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
-    <mesh position={[.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?(mats.rl as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
-    <mesh position={[-.51,1,0]} castShadow><boxGeometry args={[1.02,2.02,1.02]}/>{pants?(mats.ll as THREE.Material[]).map((m,i)=><primitive key={i} object={m}/>):skin}</mesh>
+    <mesh position={[0,4.5,0]} castShadow geometry={new THREE.BoxGeometry(2,1,1)} material={skin}/>
+    <mesh position={[0,3,0]} castShadow geometry={new THREE.BoxGeometry(2.02,2.02,1.02)} material={tshirt&&materials.front ? materials.torso as THREE.Material[] : (materials.torso as THREE.Material[])}/>
+    {shirt && <mesh position={[1.51,3,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={materials.ra as THREE.Material[]}/>}
+    {!shirt && <mesh position={[1.51,3,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={skin}/>}
+    {shirt && <mesh position={[-1.51,3,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={materials.la as THREE.Material[]}/>}
+    {!shirt && <mesh position={[-1.51,3,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={skin}/>}
+    {pants && <mesh position={[.51,1,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={materials.rl as THREE.Material[]}/>}
+    {!pants && <mesh position={[.51,1,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={skin}/>}
+    {pants && <mesh position={[-.51,1,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={materials.ll as THREE.Material[]}/>}
+    {!pants && <mesh position={[-.51,1,0]} castShadow geometry={new THREE.BoxGeometry(1.02,2.02,1.02)} material={skin}/>}
   </group>;
 }
 class PreviewErrorBoundary extends React.Component<{children:React.ReactNode},{hasError:boolean}>{
