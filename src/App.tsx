@@ -76,7 +76,7 @@ function FaceMaterial({source,rect,flip=false}:{source:HTMLCanvasElement,rect:Fa
 }
 function Skin(){return <meshStandardMaterial color="#d9b08a" roughness={.9}/>}
 
-function R6Avatar({kind,source}:{kind:Kind,source:HTMLCanvasElement}){
+function R6Avatar({kind,source,body}:{kind:Kind,source:HTMLCanvasElement,body:"blocky"|"boy"|"girl"}){
  const shirt=kind==="shirt",pants=kind==="pants",tee=kind==="tshirt";
  return <group position={[0,-2.7,0]} scale={1.48}>
    <mesh position={[0,5.25,0]} castShadow><boxGeometry args={[2,1,1]}/><Skin/></mesh>
@@ -97,7 +97,7 @@ function R6Avatar({kind,source}:{kind:Kind,source:HTMLCanvasElement}){
 
 export default function App(){
  const[kind,setKind]=useState<Kind>("shirt"),[tool,setTool]=useState<Tool>("select"),[color,setColor]=useState("#ff641f"),[brush,setBrush]=useState(18),[showGrid,setShowGrid]=useState(true),[showGuides,setShowGuides]=useState(true),[zoom,setZoom]=useState(1),
- [layers,setLayers]=useState<Layer[]>([]),[selected,setSelected]=useState(1),[nextId,setNextId]=useState(1),[history,setHistory]=useState<Layer[][]>([]),[future,setFuture]=useState<Layer[][]>([]),
+ [layers,setLayers]=useState<Layer[]>([]),[selected,setSelected]=useState(1),[body,setBody]=useState<"blocky"|"boy"|"girl">("blocky"),[homeOpen,setHomeOpen]=useState(false),[nextId,setNextId]=useState(1),[history,setHistory]=useState<Layer[][]>([]),[future,setFuture]=useState<Layer[][]>([]),
  [tab,setTab]=useState<"insert"|"layers">("insert"),[inspectorTab,setInspectorTab]=useState<"edit"|"view">("edit"),[viewMode,setViewMode]=useState<"split"|"3d"|"2d">("split"),[panel,setPanel]=useState<"design"|"assets">("design"),
  [saved,setSaved]=useState(true),[ground,setGround]=useState(true),[light,setLight]=useState(1.35),[bg,setBg]=useState("#11141b"),[textValue,setTextValue]=useState("YOUR TEXT"),[font,setFont]=useState("Inter"),[fontSize,setFontSize]=useState(48),[bold,setBold]=useState(true),[pattern,setPattern]=useState<"stripes"|"checker"|"gradient">("stripes");
  const[w,h]=SIZES[kind],editor=useRef<HTMLCanvasElement>(null),file=useRef<HTMLInputElement>(null),projectFile=useRef<HTMLInputElement>(null),dragging=useRef(false),last=useRef<{x:number,y:number}|null>(null);
@@ -182,7 +182,7 @@ export default function App(){
     <div className="viewport">
       <Canvas shadows dpr={[1,2]} camera={{position:[6.5,3.2,8.5],fov:40}}>
        <color attach="background" args={[bg]}/><ambientLight intensity={light}/><directionalLight position={[5,9,6]} intensity={2.25} castShadow/><directionalLight position={[-4,3,-2]} intensity={.65}/>
-       <R6Avatar kind={kind} source={composite}/>
+       <R6Avatar kind={kind} source={composite} body={body}/>
        {ground&&<><mesh rotation={[-Math.PI/2,0,0]} position={[0,-3.2,0]} receiveShadow><planeGeometry args={[18,18]}/><meshStandardMaterial color="#0a0d12" roughness={1}/></mesh><ContactShadows position={[0,-3.18,0]} opacity={.42} scale={11} blur={2.4}/></>}
        <OrbitControls enablePan={false} minDistance={5.5} maxDistance={14}/>
       </Canvas>
